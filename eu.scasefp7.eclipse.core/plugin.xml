@@ -2,6 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="eu.scasefp7.eclipse.core.builder" name="builder" schema="schema/eu.scasefp7.eclipse.core.builder.exsd"/>
+   <extension-point id="eu.scasefp7.eclipse.core.dashboardItem2" name="dashboardItem2" schema="schema/eu.scasefp7.eclipse.core.dashboardItem2.exsd"/>
    <extension point="org.eclipse.ui.commands">
       <category id="eu.scasefp7.eclipse.core.commands.category" name="Core Commands Category"/>
       <command categoryId="eu.scasefp7.eclipse.core.commands.category" id="eu.scasefp7.eclipse.core.commands.testSetup" name="Test project setup"/>

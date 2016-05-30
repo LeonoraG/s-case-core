@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <introContent>
-    <page id="root" content="root.xhtml"/>
+    <page id="root" content="https://raw.githubusercontent.com/s-case/s-case.github.io/master/releasenotes.md"/> <!-- tu je bilo root.xhtml -->
 </introContent>

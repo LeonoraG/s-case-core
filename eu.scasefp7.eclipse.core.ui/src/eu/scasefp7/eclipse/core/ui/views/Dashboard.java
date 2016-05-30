@@ -15,10 +15,12 @@
  */
 package eu.scasefp7.eclipse.core.ui.views;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.CommandEvent;
@@ -124,10 +126,34 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
     private ISelection currentSelection;
     
     /**
+     * Name of the group and group of buttons
+     */
+    private HashMap<String, Group> groups = new HashMap<String, Group>();
+    
+    /**
+     * Button ID and buttons
+     */
+    private HashMap<String, Button> buttons = new HashMap<String, Button>();
+    
+    /**
+     * First button is above the button with given string ID
+     */
+    private List<Entry<Button,String>> ordering = new ArrayList<Entry<Button,String>>();
+    
+    /**
+     * New extension for dashboard
+     * TODO: change the current one in ScaseUiConstants.DASHBOARD_EXTENSION to this one 
+     */
+    private final String DASHBOARD_EXTENSION = "eu.scasefp7.eclipse.core.dashboardItem2";
+    
+    private Composite _parent;
+    
+    /**
 	 * The constructor.
 	 */
 	public Dashboard() {
-	    RegistryFactory.getRegistry().addListener(this, ScaseUiConstants.DASHBOARD_EXTENSION);
+	    //RegistryFactory.getRegistry().addListener(this, ScaseUiConstants.DASHBOARD_EXTENSION);
+	    RegistryFactory.getRegistry().addListener(this, DASHBOARD_EXTENSION);
 	}
 
 	@Override
@@ -162,8 +188,8 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
 		
 		// Read the configuration of the dashboard
 		IExtensionRegistry registry = Platform.getExtensionRegistry();
-        IConfigurationElement[] contributions = registry.getConfigurationElementsFor(ScaseUiConstants.DASHBOARD_EXTENSION);
-        
+        //IConfigurationElement[] contributions = registry.getConfigurationElementsFor(ScaseUiConstants.DASHBOARD_EXTENSION);
+        IConfigurationElement[] contributions = registry.getConfigurationElementsFor(DASHBOARD_EXTENSION);
         // Create the configured items
         for (IConfigurationElement elem : contributions) {
             if(elem.getName().equals(CONTRIBUTION_GROUP)) {
@@ -173,7 +199,15 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
                 handleButton(parent, elem);   
             }
         }
-		
+        if(!ordering.isEmpty()){
+        	for(Entry<Button, String> e : ordering){
+        		String id = e.getValue();
+        		Button first = e.getKey();
+        		Button second = buttons.get(id);;
+        		first.moveAbove(second);
+        	}
+        }
+
         parent.addControlListener(new ControlAdapter() {
             @Override
             public void controlResized(ControlEvent e) {
@@ -181,6 +215,7 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
             }
         });
         
+        _parent = parent;
         
 		// Project setup
         /*int startR = 95,
@@ -286,7 +321,7 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
      */
     private void handleGroup(Composite parent, IConfigurationElement elem) throws InvalidRegistryObjectException {
         Group group = createGroup(parent, elem.getAttribute(CONTRIBUTION_GROUP_NAME));
-        
+        groups.put(elem.getAttribute(CONTRIBUTION_GROUP_NAME), group);
         for (IConfigurationElement child : elem.getChildren()) {
             if(child.getName().equals(CONTRIBUTION_GROUP)) {
                 handleGroup(group, child);
@@ -308,11 +343,20 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
 
         String name = elem.getAttribute(CONTRIBUTION_COMMAND_LABEL);
         String tooltip = elem.getAttribute(CONTRIBUTION_COMMAND_TOOLTIP);
+        String groupName = elem.getAttribute("groupName");
+        
+        if(groupName!=null && groupName!="")
+        	parent = groups.get(groupName);
+        
+        String appearsBefore = elem.getAttribute("appearsBefore");
+        String buttonId = elem.getAttribute("buttonId");
+        
         final String commandId = elem.getAttribute(CONTRIBUTION_COMMAND_ID);
         final String notificationSuccess = elem.getAttribute(CONTRIBUTION_COMMAND_NOTIFICATION_SUCCESS);
         final String notificationFail = elem.getAttribute(CONTRIBUTION_COMMAND_NOTIFICATION_FAIL);
-        
+
         Button btn = new Button(parent, SWT.NONE);
+        
         
         if(name != null) {
             btn.setText(name);
@@ -363,6 +407,14 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
                     }
                 });   
             }
+        }
+        
+        buttons.put(buttonId, btn);
+        
+        if(appearsBefore!= null && appearsBefore != ""){
+        	Entry<Button, String> entry =
+        		    new AbstractMap.SimpleEntry<Button, String>(btn, appearsBefore);
+        	ordering.add(entry);
         }
     }
 
@@ -643,25 +695,25 @@ public class Dashboard extends ViewPart implements ISelectionListener, IRegistry
     
     @Override
     public void added(IExtension[] extensions) {
-        // TODO Auto-generated method stub
+    	_parent.update();
         
     }
 
     @Override
     public void removed(IExtension[] extensions) {
-        // TODO Auto-generated method stub
+    	_parent.update();
         
     }
 
     @Override
     public void added(IExtensionPoint[] extensionPoints) {
-        // TODO Auto-generated method stub
+    	_parent.update();
         
     }
 
     @Override
     public void removed(IExtensionPoint[] extensionPoints) {
-        // TODO Auto-generated method stub
+    	_parent.update();
         
     }
 
