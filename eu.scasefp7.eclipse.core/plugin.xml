@@ -119,6 +119,7 @@
      <buildStep
            commandId="eu.scasefp7.eclipse.storyboards.commands.exportToOntology"
            condition="(.*).sbd"
+           inFolder="models folder"
            name="Export storyboards to ontology">
      </buildStep>
      <buildStep

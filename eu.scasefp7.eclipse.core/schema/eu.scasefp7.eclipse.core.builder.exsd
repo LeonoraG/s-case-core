@@ -76,6 +76,25 @@
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="inFolder">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+            <simpleType>
+               <restriction base="string">
+                  <enumeration value="requirements folder">
+                  </enumeration>
+                  <enumeration value="models folder">
+                  </enumeration>
+                  <enumeration value="output folder">
+                  </enumeration>
+                  <enumeration value="compositions folder">
+                  </enumeration>
+               </restriction>
+            </simpleType>
+         </attribute>
       </complexType>
    </element>
 

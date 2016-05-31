@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IRegistryEventListener;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.variables.IDynamicVariable;
 import org.eclipse.core.variables.IDynamicVariableResolver;
 import org.eclipse.core.variables.IStringVariable;
@@ -67,6 +68,8 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
     private static final String CONTRIBUTION_VARIABLE = "variable";
     private static final String CONTRIBUTION_PREFERENCE = "preference";
     
+    private Map<String,String> projectFolders = new HashMap<String,String>();
+    
     
     class BuildDeltaVisitor implements IResourceDeltaVisitor {
 
@@ -83,6 +86,14 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
             				 if (elem.getName().equals("buildStep")) {
             					 String commandId = elem.getAttribute("commandId");
             					 String regex = elem.getAttribute("condition");
+            					 String inFolder = elem.getAttribute("inFolder");
+            					 String folderCondition = "";
+            					 
+            					 if(inFolder != null && inFolder != "") {
+            						 String property = projectFolders.get(inFolder);
+            						 IProject project = ((IFile)resource).getProject();
+            						 folderCondition = project.getPersistentProperty(new QualifiedName("", property));
+            					 }
             					
             					 IConfigurationElement[] elements = elem.getChildren("commandParameters");
             					 boolean hasParameters = elements.length > 0;
@@ -91,13 +102,15 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
             					 if(hasParameters)
                 						 getParameters(resource, parameters, elements[0]);
             					 
-            	                 if(resource.getName().matches(regex)) {
-            	                	 if(!hasParameters)
-            	                		 executeCommand(commandId, resource.getFullPath().toString());
-            	                	 else
-            	                		 executeCommand(commandId, resource.getFullPath().toString(), parameters);
-            	                	 System.out.println("Command: " + commandId+" on file: "+resource.getFullPath().toString()+" (d)");
-            	                 }
+								if ((folderCondition == "" || resource.getFullPath().toString().contains(folderCondition))
+										&& resource.getName().matches(regex)) {
+									if (!hasParameters)
+										executeCommand(commandId, resource.getFullPath().toString());
+									else
+										executeCommand(commandId, resource.getFullPath().toString(), parameters);
+									System.out.println("Command: " + commandId + " on file: "
+											+ resource.getFullPath().toString() + " (d)");
+								}
          					}
             	}
 
@@ -122,6 +135,19 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
         				 if (elem.getName().equals("buildStep")) {
         					 String commandId = elem.getAttribute("commandId");
         					 String regex = elem.getAttribute("condition");
+        					 String inFolder = elem.getAttribute("inFolder");
+        					 String folderCondition = "";
+        					 
+        					 if(inFolder != null && inFolder != "") {
+        						 String property = projectFolders.get(inFolder);
+        						 IProject project = ((IFile)resource).getProject();
+        						 try {
+									folderCondition = project.getPersistentProperty(new QualifiedName("", property));
+								} catch (CoreException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+        					 }
         					 IConfigurationElement[] elements = elem.getChildren("commandParameters");
         					 boolean hasParameters = elements.length > 0;
         					 HashMap<String,String> parameters = new HashMap<String,String>();
@@ -129,7 +155,8 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
         					 if(hasParameters)
         						 getParameters(resource, parameters, elements[0]);
         					 
-        	                 if(resource.getName().matches(regex)) {
+        	                 if((folderCondition == "" || resource.getFullPath().toString().contains(folderCondition))
+										&& resource.getName().matches(regex)) {
         	                	 if(!hasParameters)
         	                		 executeCommand(commandId, resource.getFullPath().toString());
         	                	 else
@@ -311,6 +338,11 @@ public class ScaseProjectBuilder extends IncrementalProjectBuilder implements IS
      */
     protected IProject[] build(int kind, @SuppressWarnings("rawtypes") Map args, IProgressMonitor monitor) throws CoreException {
 
+    	projectFolders.put("requirements folder", "eu.scasefp7.eclipse.core.ui.rqsFolder");
+    	projectFolders.put("compositions folder", "eu.scasefp7.eclipse.core.ui.compFolder");
+    	projectFolders.put("models folder", "eu.scasefp7.eclipse.core.ui.modelsFolder");
+    	projectFolders.put("output folder", "eu.scasefp7.eclipse.core.ui.outputFolder");
+    	
         if (kind == FULL_BUILD) 
             fullBuild(monitor);
         else {
